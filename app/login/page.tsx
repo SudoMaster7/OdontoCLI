@@ -1,29 +1,46 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { SmileIcon as Tooth } from "lucide-react"
+import { authenticate } from "@/lib/auth" // <- Importa a função de autenticação
 
 export default function LoginPage() {
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
   const [userType, setUserType] = useState("dentista")
+  const [error, setError] = useState("")
   const router = useRouter()
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    // Em uma aplicação real, autenticaríamos o usuário aqui
-    // Para demonstração, apenas redirecionamos com base no tipo de usuário
-    if (userType === "admin") {
-      router.push("/dashboard/admin")
-    } else {
-      router.push("/dashboard/dentista")
+    const user = authenticate(email, password)
+
+    if (!user) {
+      setError("Email ou senha inválidos.")
+      return
     }
+
+    if (user.role !== userType) {
+      setError("O tipo de usuário não corresponde ao email informado.")
+      return
+    }
+
+    // Redireciona para o dashboard correspondente
+    router.push(`/dashboard/${user.role}`)
   }
 
   return (
@@ -33,18 +50,35 @@ export default function LoginPage() {
           <div className="flex items-center justify-center mb-2">
             <Tooth className="h-12 w-12 text-blue-500" />
           </div>
-          <CardTitle className="text-2xl font-bold text-center text-blue-700">OdontoClinic</CardTitle>
-          <CardDescription className="text-center">Entre com suas credenciais para acessar o sistema</CardDescription>
+          <CardTitle className="text-2xl font-bold text-center text-blue-700">
+            OdontoClinic
+          </CardTitle>
+          <CardDescription className="text-center">
+            Entre com suas credenciais para acessar o sistema
+          </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="seu@email.com" required />
+              <Input
+                id="email"
+                type="email"
+                placeholder="seu@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Senha</Label>
-              <Input id="password" type="password" required />
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
             </div>
             <div className="space-y-2">
               <Label>Tipo de Usuário</Label>
@@ -64,9 +98,13 @@ export default function LoginPage() {
                 </div>
               </RadioGroup>
             </div>
+            {error && <p className="text-red-500 text-sm">{error}</p>}
           </CardContent>
           <CardFooter className="flex flex-col">
-            <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700">
+            <Button
+              type="submit"
+              className="w-full bg-blue-600 hover:bg-blue-700"
+            >
               Entrar
             </Button>
             <div className="mt-4 text-center text-sm text-muted-foreground">

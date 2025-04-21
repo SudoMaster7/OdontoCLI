@@ -59,3 +59,32 @@ CREATE INDEX IF NOT EXISTS idx_agendamentos_dentista ON agendamentos(dentista_id
 CREATE INDEX IF NOT EXISTS idx_agendamentos_paciente ON agendamentos(paciente_id);
 CREATE INDEX IF NOT EXISTS idx_agendamentos_data ON agendamentos(data);
 CREATE INDEX IF NOT EXISTS idx_pacientes_dentista ON pacientes(dentista_id);
+
+-- tabela de perfis adicionais (dentistas)
+create table if not exists profiles (
+  id uuid references auth.users(id) primary key,
+  full_name text not null,
+  crm text unique not null,
+  telefone text,
+  created_at timestamptz default now()
+);
+
+-- pacientes ligados ao dentista
+create table if not exists pacientes (
+  id uuid primary key default gen_random_uuid(),
+  dentist_id uuid references profiles(id),
+  nome text not null,
+  data_nascimento date,
+  telefone text,
+  criado_em timestamptz default now()
+);
+
+-- agendamentos
+create table if not exists agendamentos (
+  id uuid primary key default gen_random_uuid(),
+  paciente_id uuid references pacientes(id),
+  dentist_id uuid references profiles(id),
+  data_hora timestamptz not null,
+  procedimento text,
+  status text default 'pendente'
+);
